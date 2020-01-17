@@ -1,0 +1,8 @@
+**/__pycache__
+*.eps
+*.pdf
+*~
+*.swp
+*.nfs
+*.svn
+*.asv
