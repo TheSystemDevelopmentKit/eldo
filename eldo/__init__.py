@@ -483,8 +483,9 @@ class eldo(thesdk,metaclass=abc.ABCMeta):
                         extval = float(words[3])
                         self.powers[sourcename] = extval
                         self.print_log(type='I',msg='%s\tpower   = %g\tW'%(sourcename,extval))
-            self.print_log(type='I',msg='Total\tcurrent = %g\tA'%(sum(self.currents.values())))
-            self.print_log(type='I',msg='Total\tpower   = %g\tW'%(sum(self.powers.values())))
+            if len(self.currents.keys()) > 0:
+                self.print_log(type='I',msg='Total\tcurrent = %g\tA'%(sum(self.currents.values())))
+                self.print_log(type='I',msg='Total\tpower   = %g\tW'%(sum(self.powers.values())))
         except:
             self.print_log(type='W',msg='Something went wrong while extracting power consumptions.')
 
