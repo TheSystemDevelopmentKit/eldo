@@ -8,7 +8,7 @@ for TheSDK eldo
 
 Initially written by Okko Järvinen, okko.jarvinen@aalto.fi, 9.1.2020
 
-Last modification by Okko Järvinen, 16.01.2020 15:29
+Last modification by Okko Järvinen, 21.01.2020 16:30
 
 """
 import os
@@ -316,6 +316,7 @@ class eldo_iofile(iofile):
                                 nans[:self.Data.shape[0],:self.Data.shape[1]] = self.Data
                                 self.Data = nans
                             self.Data = np.hstack((self.Data,nparr))
+                    infile.close()
                 elif self.iotype=='sample':
                     nodematch=re.compile(r"%s" % self.ionames[i].upper())
                     with open(self.file[i]) as infile:
@@ -358,6 +359,7 @@ class eldo_iofile(iofile):
                             self.Data = np.array(arr).reshape(-1,1)
                         else:
                             self.Data = np.hstack((self.Data,np.array(arr).reshape(-1,1)))
+                    infile.close()
                 else:
                     self.print_log(type='F',msg='Couldn\'t read file for input type \'%s\'.'%self.iotype)
             except:
