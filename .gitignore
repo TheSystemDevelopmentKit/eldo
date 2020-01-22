@@ -6,3 +6,5 @@
 *.nfs
 *.svn
 *.asv
+Makefile
+doc/build/**
