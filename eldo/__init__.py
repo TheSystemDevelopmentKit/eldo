@@ -384,7 +384,8 @@ class eldo(thesdk,metaclass=abc.ABCMeta):
                 except:
                     self.print_log(type='W',msg='Could not remove %s.' % simpathname)
         else:
-            self.print_log(type='I',msg='Preserving %s.' % self.eldosimpath)
+            # Using the private variable here to prevent the re-creation of the dir?
+            self.print_log(type='I',msg='Preserving %s.' % self._eldosimpath)
 
 
     @property

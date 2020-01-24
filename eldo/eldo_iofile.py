@@ -8,7 +8,7 @@ for TheSDK eldo
 
 Initially written by Okko Järvinen, okko.jarvinen@aalto.fi, 9.1.2020
 
-Last modification by Okko Järvinen, 22.01.2020 10:57
+Last modification by Okko Järvinen, 24.01.2020 10:56
 
 """
 import os
@@ -341,12 +341,13 @@ class eldo_iofile(iofile):
                                     outbus.update({bitidx:[bitval]})
                         maxbit = max(map(int,outbus.keys()))
                         minbit = min(map(int,outbus.keys()))
-                        if self.big_endian:
+                        # TODO: REALLY check the endianness of these (together with RTL)
+                        if not self.big_endian:
                             bitrange = range(maxbit,minbit-1,-1)
-                            self.print_log(type='I',msg='Reading %s<%d:%d> from file to %s.'%(self.ionames[i].upper(),minbit,maxbit,self.name))
+                            self.print_log(type='I',msg='Reading %s<%d:%d> from file to %s.'%(self.ionames[i].upper(),maxbit,minbit,self.name))
                         else:
                             bitrange = range(minbit,maxbit+1,1)
-                            self.print_log(type='I',msg='Reading %s<%d:%d> from file to %s.'%(self.ionames[i].upper(),maxbit,minbit,self.name))
+                            self.print_log(type='I',msg='Reading %s<%d:%d> from file to %s.'%(self.ionames[i].upper(),minbit,maxbit,self.name))
                         arr = []
                         for idx in range(maxsamp):
                             word = ''
