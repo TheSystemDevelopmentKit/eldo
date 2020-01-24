@@ -160,7 +160,7 @@ class eldo_module(thesdk):
     @property
     def libcmd(self):
         if not hasattr(self,'_libcmd'):
-            libpath = ""
+            libfile = ""
             corner = "top_tt"
             temp = "27"
             for optname,optval in self.parent.eldocorner.items():
@@ -169,13 +169,13 @@ class eldo_module(thesdk):
                 if optname == "corner":
                     corner = optval
             try:
-                libpath = thesdk.GLOBALS['ELDOLIBPATH']
+                libfile = thesdk.GLOBALS['ELDOLIBFILE']
                 self._libcmd = "*** Eldo device models\n"
-                self._libcmd += ".lib " + libpath + " " + corner + "\n"
+                self._libcmd += ".lib " + libfile + " " + corner + "\n"
             except:
                 self.print_log(type='W',msg='Global TheSDK variable ELDOLIBPATH not set.')
                 self._libcmd = "*** Eldo device models (undefined)\n"
-                self._libcmd += "*.lib " + libpath + " " + corner + "\n"
+                self._libcmd += "*.lib " + libfile + " " + corner + "\n"
             self._libcmd += ".temp " + temp + "\n"
         return self._libcmd
     @libcmd.setter

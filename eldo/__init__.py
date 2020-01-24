@@ -15,6 +15,7 @@ import subprocess
 import shlex
 import pdb
 import shutil
+import time
 from datetime import datetime
 from abc import * 
 from thesdk import *
@@ -375,7 +376,7 @@ class eldo(thesdk,metaclass=abc.ABCMeta):
             # IO files were also removed -> remove the directory
             if not self.preserve_iofiles:
                 # I need to save this here to prevent the directory from being re-created
-                simpathname = self.eldosimpath
+                simpathname = self._eldosimpath
                 try:
                     # This fails now because of .nfs files
                     shutil.rmtree(simpathname)
@@ -400,7 +401,7 @@ class eldo(thesdk,metaclass=abc.ABCMeta):
         else:
             nproc = ""
 
-        eldosimcmd = "eldo -64b %s %s " % (ezwave,nproc)
+        eldosimcmd = "eldo -64b -queue %s %s " % (ezwave,nproc)
         eldotbfile = self.eldotbsrc
         self._eldocmd = submission +\
                         eldosimcmd +\
@@ -446,8 +447,20 @@ class eldo(thesdk,metaclass=abc.ABCMeta):
         # Call eldo here
         self.print_log(type='I', msg="Running external command %s\n" %(self.eldocmd) )
     
-        #subprocess.check_output(self.eldocmd, shell=True);
-        os.system(self.eldocmd)
+        # This is some experimental stuff
+        count = 0
+        while True:
+            status = int(os.system(self.eldocmd)/256)
+            # Status code 9 seems to result from failed licensing in LSF runs
+            # Let's not try to restart if in interactive mode
+            if status != 9 or count == 10 or self.interactive_eldo:
+                break
+            else:
+                count += 1
+                self.print_log(type='W',msg='License error, trying again... (%d/10)' % count)
+                time.sleep(5)
+        if status > 0:
+            self.print_log(type='F',msg='Eldo encountered an error (%d).' % status)
 
     def extract_powers(self):
         self.powers = {}
@@ -470,8 +483,9 @@ class eldo(thesdk,metaclass=abc.ABCMeta):
                         extval = float(words[3])
                         self.powers[sourcename] = extval
                         self.print_log(type='I',msg='%s\tpower   = %g\tW'%(sourcename,extval))
-            self.print_log(type='I',msg='Total\tcurrent = %g\tA'%(sum(self.currents.values())))
-            self.print_log(type='I',msg='Total\tpower   = %g\tW'%(sum(self.powers.values())))
+            if len(self.currents.keys()) > 0:
+                self.print_log(type='I',msg='Total\tcurrent = %g\tA'%(sum(self.currents.values())))
+                self.print_log(type='I',msg='Total\tpower   = %g\tW'%(sum(self.powers.values())))
         except:
             self.print_log(type='W',msg='Something went wrong while extracting power consumptions.')
 
@@ -486,7 +500,9 @@ class eldo(thesdk,metaclass=abc.ABCMeta):
         self.tb.export_subckt(force=True)
         self.tb.export(force=True)
         self.write_infile()
+        #time.sleep(1)
         self.execute_eldo_sim()
+        #time.sleep(1)
         self.extract_powers()
         self.read_outfile()
         self.connect_outputs()

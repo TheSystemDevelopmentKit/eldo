@@ -105,7 +105,7 @@ class testbench(eldo_module):
             for name, val in self.iofiles.Members.items():
                 # Input file becomes a source
                 if val.dir.lower()=='in' or val.dir.lower()=='input':
-                    if val.iotype=='event':
+                    if val.iotype.lower()=='event':
                         for i in range(len(val.ionames)):
                             # Finding the max time instant
                             maxtime = val.Data[-1,0]
@@ -114,17 +114,24 @@ class testbench(eldo_module):
                             # Adding the source
                             self._inputsignals += "%s%s %s 0 pwl(file=\"%s\")\n" % \
                                     (val.sourcetype.upper(),val.ionames[i].lower(),val.ionames[i].upper(),val.file[i])
-                    else:
-                        #print_log(type='F',msg='Sample type input not imlpemented yet.')
+                    elif val.iotype.lower()=='sample':
                         for i in range(len(val.ionames)):
                             pattstr = ''
                             for d in val.Data[:,i]:
                                 pattstr += '%s ' % str(d)
                             if float(self._trantime) < len(val.Data)/val.rs:
                                 self._trantime = len(val.Data)/val.rs
+                            # Checking if the given bus is actually a 1-bit signal
+                            if ('<' not in val.ionames[i]) and ('>' not in val.ionames[i]) and len(str(val.Data[0,i])) == 1:
+                                busname = '%s_BUS' % val.ionames[i]
+                                self._inputsignals += '.setbus %s %s\n' % (busname,val.ionames[i])
+                            else:
+                                busname = val.ionames[i]
                             # Adding the source
                             self._inputsignals += ".sigbus %s vhi=%s vlo=%s tfall=%s trise=%s thold=%s tdelay=%s base=%s PATTERN %s\n" % \
-                                    (val.ionames[i],str(val.vhi),str(val.vlo),str(val.tfall),str(val.trise),str(1/val.rs),'0','bin',pattstr)
+                                    (busname,str(val.vhi),str(val.vlo),str(val.tfall),str(val.trise),str(1/val.rs),'0','bin',pattstr)
+                    else:
+                        print_log(type='F',msg='Input type \'%s\' undefined.' % val.iotype)
 
             if self._trantime == 0:
                 self._trantime = "simtime"

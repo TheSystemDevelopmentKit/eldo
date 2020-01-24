@@ -7,7 +7,7 @@ Class for ELDO DC sources.
 
 Initially written for eldo-module by Okko Järvinen, okko.jarvinen@aalto.fi, 9.1.2020
 
-Last modification by Okko Järvinen, 14.01.2020 13:21
+Last modification by Marko Kosunen, marko.kosunen@aalto.fi, 22.01.2020 12:28
 
 """
 
@@ -28,35 +28,8 @@ class eldo_dcsource(thesdk):
     Example
     -------
     Initiated in parent as: 
-        _=eldo_dcsource(self,name='dd',value=1.0,supply=True,pos='VDD',neg='VSS')
+        `_=eldo_dcsource(self,name='dd',value=1.0,supply=True,pos='VDD',neg='VSS')`
     
-    Parameters
-    -----------
-    parent : object 
-        The parent object initializing the 
-        eldo_dcsource instance. Default None
-    
-    **kwargs :  
-            name : str  
-                Name of the source.
-            value : float  
-                Value of the source.
-            sourcetype : str  
-                Type of the DC source. Either 'V' for voltage
-                or 'I' for current.
-            extract : bool
-                Flag the source for current and power consumption extraction.
-                Default False.
-            ext_start : float
-                Time to start extracting average transient power consumption.
-                Default is 0.
-            ext_stop : float
-                Time to start extracting average transient power consumption.
-                Default is simulation end time.
-            pos : str
-                Name of the positive node in the ELDO netlist.
-            neg : str
-                Name of the negative node in the ELDO netlist.
     """
 
     @property
@@ -64,6 +37,37 @@ class eldo_dcsource(thesdk):
         return os.path.dirname(os.path.realpath(__file__)) + "/"+__name__
 
     def __init__(self,parent,**kwargs):
+        '''
+            Parameters
+            ----------
+            parent : object 
+                The parent object initializing the 
+                `eldo_dcsource` instance. Default None
+            
+            **kwargs :  
+                    name : str  
+                        Name of the source.
+                    value : float  
+                        Value of the source.
+                    sourcetype : str  
+                        Type of the DC source. Either 'V' for voltage
+                        or 'I' for current.
+                    extract : bool
+                        Flag the source for current and power consumption extraction.
+                        Default False.
+                    ext_start : float
+                        Time to start extracting average transient power consumption.
+                        Default is 0.
+                    ext_stop : float
+                        Time to start extracting average transient power consumption.
+                        Default is simulation end time.
+                    pos : str
+                        Name of the positive node in the ELDO netlist.
+                    neg : str
+                        Name of the negative node in the ELDO netlist.
+
+        '''
+
         try:  
             self.parent = parent
             self._sourcetype=kwargs.get('sourcetype','V')

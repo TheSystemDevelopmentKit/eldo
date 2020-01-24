@@ -14,7 +14,15 @@
    :members:
    :undoc-members:
 
-.. automodule:: eldo.source
+.. automodule:: eldo.eldo_iofile
+   :members:
+   :undoc-members:
+
+.. automodule:: eldo.eldo_simcmd
+   :members:
+   :undoc-members:
+
+.. automodule:: eldo.eldo_dcsource
    :members:
    :undoc-members:
 

@@ -8,7 +8,7 @@ for TheSDK eldo
 
 Initially written by Okko Järvinen, okko.jarvinen@aalto.fi, 9.1.2020
 
-Last modification by Okko Järvinen, 16.01.2020 15:29
+Last modification by Okko Järvinen, 22.01.2020 10:57
 
 """
 import os
@@ -86,7 +86,6 @@ class eldo_iofile(iofile):
                 Default 5e-12.
     """
     def __init__(self,parent=None,**kwargs):
-        #This is a redundant check, but doens not hurt.to have it here too.
         if parent==None:
             self.print_log(type='F', msg="Parent of eldo input file not given")
         try:  
@@ -107,7 +106,6 @@ class eldo_iofile(iofile):
 
         except:
             self.print_log(type='F', msg="eldo IO file definition failed.")
-
 
     @property
     def ioformat(self):
@@ -316,6 +314,7 @@ class eldo_iofile(iofile):
                                 nans[:self.Data.shape[0],:self.Data.shape[1]] = self.Data
                                 self.Data = nans
                             self.Data = np.hstack((self.Data,nparr))
+                    infile.close()
                 elif self.iotype=='sample':
                     nodematch=re.compile(r"%s" % self.ionames[i].upper())
                     with open(self.file[i]) as infile:
@@ -358,6 +357,7 @@ class eldo_iofile(iofile):
                             self.Data = np.array(arr).reshape(-1,1)
                         else:
                             self.Data = np.hstack((self.Data,np.array(arr).reshape(-1,1)))
+                    infile.close()
                 else:
                     self.print_log(type='F',msg='Couldn\'t read file for input type \'%s\'.'%self.iotype)
             except:
