@@ -2,6 +2,9 @@
 # marko.kosunen@aalto.fi
 import os
 import pdb
+import shutil
+import fileinput
+import sys
 from thesdk import *
 from eldo import *
 from copy import deepcopy
@@ -51,32 +54,87 @@ class eldo_module(thesdk):
     @property
     def subckt(self):
         if not hasattr(self,'_subckt'):
-            cellnamematch=re.compile(r"\*\*\* Design cell name:")
-            startmatch=re.compile(r"\.SUBCKT")
-            endmatch=re.compile(r"\.ENDS")
-            cellname = ""
+            cellnamematch=re.compile(r"\*\*\* Design cell name:",re.IGNORECASE)
+            prognamematch=re.compile(r"\* Program",re.IGNORECASE)
+            startmatch=re.compile(r"\.SUBCKT",re.IGNORECASE)
+            endmatch=re.compile(r"\.ENDS",re.IGNORECASE)
+            cellname = ''
+            self._postlayout = False
+            linecount = 0
             self._subckt="*** Subcircuit definitions\n\n"
             # Extract the module definition
             if os.path.isfile(self._dutfile):
-                with open(self._dutfile) as infile:
-                    wholefile=infile.readlines()
-                    startfound=False
-                    endfound=False
-                    for line in wholefile:
-                        if not startfound and cellnamematch.search(line) != None:
-                            words = line.split()
-                            cellname = words[-1]
-                        if not startfound and startmatch.search(line) != None and cellname != "":
-                            startfound=True
-                            words = line.split()
-                            if words[1].lower() == cellname.lower():
-                                self._subckt+="\n*** Subcircuit definition for %s module\n" % self.parent.name
-                                words[1] = self.parent.name.upper()
-                                line = ' '.join(words) + "\n"
-                        if startfound:
-                            self._subckt=self._subckt+line
-                        if startfound and endmatch.search(line) != None:
-                            startfound=False
+                try:
+                    with open(self._dutfile) as infile:
+                        wholefile=infile.readlines()
+                        startfound=False
+                        endfound=False
+                        for line in wholefile:
+                            # First subcircuit not started, finding ADEL written cell name
+                            if not startfound and cellnamematch.search(line) != None:
+                                words = line.split()
+                                cellname = words[-1]
+                                self.print_log(type='I',msg='Found cell-name definition ("%s").' % cellname)
+                            # First subcircuit not started, finding Calibre xRC written program name
+                            if not startfound and prognamematch.search(line) != None:
+                                self.print_log(type='I',msg='Post-layout netlist detected (%s).' % (' '.join(line.split()[2:])))
+                                # Parsing the post-layout netlist line by line is way too slow
+                                # Copying the file and editing it seems better
+                                self._postlayout = True
+                                # Right now this just ignores everything and overwrites the subcircuit file
+                                # TODO: think about this
+                                if os.path.isfile(self._subcktfile):
+                                    os.remove(self._subcktfile)
+                                    shutil.copyfile(self._dutfile,self._subcktfile)
+                                else:
+                                    shutil.copyfile(self._dutfile,self._subcktfile)
+                                for line in fileinput.input(self._subcktfile,inplace=1):
+                                    startfound=False
+                                    endfound=False
+                                    if not startfound and startmatch.search(line) != None:
+                                        startfound=True
+                                        words = line.split()
+                                        if cellname == '':
+                                            cellname = words[1].lower()
+                                        if words[1].lower() == cellname.lower():
+                                            words[1] = self.parent.name.upper()
+                                            line = ' '.join(words) + "\n"
+                                    sys.stdout.write(line)
+                                self.print_log(type='I',msg='Renaming design cell %s to %s.' % (cellname,self.parent.name))
+                                self._subckt = ''
+                                return self._subckt
+                            # First subcircuit not started, starts on this line though
+                            if not startfound and startmatch.search(line) != None:
+                                startfound=True
+                                words = line.split()
+                                # Either it's a postlayout netlist, or the cell name was not defined
+                                # in the header -> assuming first subcircuit is top-level circuit
+                                if cellname == '':
+                                    cellname = words[1].lower()
+                                    self.print_log(type='I',msg='Renaming design cell %s to %s.' % (cellname,self.parent.name))
+                                if words[1].lower() == cellname.lower():
+                                    self._subckt+="\n*** Subcircuit definition for %s module\n" % self.parent.name
+                                    words[1] = self.parent.name.upper()
+                                    line = ' '.join(words) + "\n"
+                                    linecount += 1
+                            # Inside the subcircuit clause -> copy all lines except comments
+                            if startfound:
+                                words = line.split()
+                                if words[0] != '*':
+                                    self._subckt=self._subckt+line
+                                    linecount += 1
+                            # Calibre places an include statement above the first subcircuit -> grab that
+                            if self._postlayout and not startfound:
+                                words = line.split()
+                                if words[0].lower() == '.include':
+                                    self._subckt=self._subckt+line
+                                    linecount += 1
+                            # End of subcircuit found
+                            if startfound and endmatch.search(line) != None:
+                                startfound=False
+                    self.print_log(type='I',msg='Source netlist parsing done (%d lines).' % linecount)
+                except:
+                    self.print_log(type='E',msg='Something went wrong while parsing %s.' % self._dutfile)
             else:
                 self.print_log(type='W',msg='File %s not found.' % self._dutfile)
         return self._subckt
@@ -91,9 +149,9 @@ class eldo_module(thesdk):
     @property
     def subinst(self):
         if not hasattr(self,'_subinst'):
-            startmatch=re.compile(r"\.SUBCKT %s" % self.parent.name.upper())
+            startmatch=re.compile(r"\.SUBCKT %s" % self.parent.name.upper(),re.IGNORECASE)
             subckt = self.subckt.split('\n')
-            if len(subckt) <= 3:
+            if len(subckt) <= 3 and not self._postlayout:
                 self.print_log(type='W',msg='No subcircuit found.')
                 self._subinst = "*** Empty subcircuit\n"
             else:
@@ -101,20 +159,38 @@ class eldo_module(thesdk):
                 startfound = False
                 endfound = False
                 # Extract the module definition
-                for line in subckt:
-                    if startmatch.search(line) != None:
-                        startfound = True
-                    elif startfound and len(line) > 0 and line[0] != "+":
-                        endfound = True
-                        startfound = False
-                    if startfound and not endfound:
-                        words = line.split(" ")
-                        if words[0].lower() == ".subckt":
-                            words[0] = "X%s" % self.parent.name.lower()
-                            words.pop(1)
-                            line = ' '.join(words)
-                        self._subinst += line + "\n"
-                self._subinst += "+" + self.parent.name.upper()
+                if not self._postlayout:
+                    for line in subckt:
+                        if startmatch.search(line) != None:
+                            startfound = True
+                        elif startfound and len(line) > 0 and line[0] != "+":
+                            endfound = True
+                            startfound = False
+                        if startfound and not endfound:
+                            words = line.split(" ")
+                            if words[0].lower() == ".subckt":
+                                words[0] = "X%s" % self.parent.name.lower()
+                                words.pop(1)
+                                line = ' '.join(words)
+                            self._subinst += line + "\n"
+                    self._subinst += "+" + self.parent.name.upper()
+                else:
+                    with open(self._subcktfile) as infile:
+                        subckt=infile.readlines()
+                        for line in subckt:
+                            if startmatch.search(line) != None:
+                                startfound = True
+                            elif startfound and len(line) > 0 and line[0] != "+":
+                                endfound = True
+                                startfound = False
+                            if startfound and not endfound:
+                                words = line.split(" ")
+                                if words[0].lower() == ".subckt":
+                                    words[0] = "X%s" % self.parent.name.lower()
+                                    words.pop(1)
+                                    line = ' '.join(words)
+                                self._subinst += line
+                        self._subinst += "+" + self.parent.name.upper()
         return self._subinst
     @subinst.setter
     def subinst(self,value):
@@ -170,8 +246,11 @@ class eldo_module(thesdk):
                     corner = optval
             try:
                 libfile = thesdk.GLOBALS['ELDOLIBFILE']
-                self._libcmd = "*** Eldo device models\n"
-                self._libcmd += ".lib " + libfile + " " + corner + "\n"
+                if libfile == '':
+                    raise ValueError
+                else:
+                    self._libcmd = "*** Eldo device models\n"
+                    self._libcmd += ".lib " + libfile + " " + corner + "\n"
             except:
                 self.print_log(type='W',msg='Global TheSDK variable ELDOLIBPATH not set.')
                 self._libcmd = "*** Eldo device models (undefined)\n"

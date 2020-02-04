@@ -8,11 +8,12 @@ for TheSDK eldo
 
 Initially written by Okko Järvinen, okko.jarvinen@aalto.fi, 9.1.2020
 
-Last modification by Okko Järvinen, 24.01.2020 10:56
+Last modification by Okko Järvinen, 04.02.2020 14:52
 
 """
 import os
 import sys
+import pdb
 from abc import * 
 from thesdk import *
 from thesdk.iofile import iofile
@@ -54,8 +55,11 @@ class eldo_iofile(iofile):
                 to threshold crossings.
             datatype : str
                 Datatype, not yet implemented.
-            trigger : str
+            trigger : str or list<str>
                 Name of the clock signal node in the Spice netlist.
+                If a single string is given, the same clock signal is used for all bits/buses.
+                If a list is given, and the length matches ionames list length, each ioname will
+                be assigned its own clock.
                 Applies only to sample type outputs.
             vth : float
                 Threshold voltage of the trigger signal and the bit rounding.
@@ -65,6 +69,10 @@ class eldo_iofile(iofile):
                 When time type signal is used, the edgetype values can define the
                 extraction type as: 'rising'/'falling'/'both'/'risetime'/'falltime'.
                 Default 'rising'.
+            after : float
+                Time to wait before starting the extraction (useful for ignoring inital settling).
+                Applies only to sample type outputs.
+                Default 0.
             big_endian : bool
                 Flag to read the extracted bus as big-endian.
                 Applies only to sample type outputs.
@@ -97,6 +105,7 @@ class eldo_iofile(iofile):
             self._trigger=kwargs.get('trigger','')
             self._vth=kwargs.get('vth',0.5)
             self._edgetype=kwargs.get('edgetype','rising')
+            self._after=kwargs.get('after',0)
             self._big_endian=kwargs.get('big_endian',False)
             self._rs=kwargs.get('rs',None)
             self._vhi=kwargs.get('vhi',1.0)
@@ -151,6 +160,17 @@ class eldo_iofile(iofile):
     @edgetype.setter
     def edgetype(self,value):
         self._edgetype=value
+
+    @property
+    def after(self):
+        if hasattr(self,'_after'):
+            return self._after
+        else:
+            self._after=0
+        return self._after
+    @after.setter
+    def after(self,value):
+        self._after=value
 
     @property
     def big_endian(self):
@@ -234,8 +254,14 @@ class eldo_iofile(iofile):
     def file(self):
         self._file = []
         for ioname in self.ionames:
-            self._file.append(self.parent.eldosimpath +'/' + ioname.replace('<','').replace('>','').replace('.','_')\
-                    + '_' + self.rndpart +'.txt')
+            #self._file.append(self.parent.eldosimpath +'/' + ioname.replace('<','').replace('>','').replace('.','_')\
+            #        + '_' + self.rndpart +'.txt')
+            filename = '%s/%s_%s_%s.txt' % (self.parent.eldosimpath,self.parent.runname,ioname.replace('<','').replace('>','').replace('.','_'),self.iotype)
+            #filenum = 0
+            #while os.path.exists(filename):
+            #    filename = '%s/%s_%s_%s_%d.txt' % (self.parent.eldosimpath,self.parent.runname,ioname.replace('<','').replace('>','').replace('.','_'),self.iotype,filenum)
+            #    filenum += 1
+            self._file.append(filename)
         return self._file
     @file.setter
     def file(self,val):

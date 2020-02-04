@@ -151,7 +151,7 @@ class testbench(eldo_module):
             for simtype, val in self.simcmds.Members.items():
                 if str(simtype).lower() == 'tran':
                     self._simcmdstr += '.%s %s %s %s\n' % \
-                            (simtype,str(val.tprint),str(val.tstop) if val.tstop is not None else self._trantime \
+                            (simtype,str(val.tprint),str(val.tstop) if val.tstop is not None else str(self._trantime+2e-9) \
                             ,'UIC' if val.uic else '')
                     if val.noise:
                         self._simcmdstr += '.noisetran fmin=%s fmax=%s nbrun=1 NONOM %s\n' % \
@@ -187,13 +187,30 @@ class testbench(eldo_module):
                                     (val.sourcetype,val.ionames[i].upper(),val.file[i])
                     elif val.iotype=='sample':
                         for i in range(len(val.ionames)):
+                            # Checking the given trigger(s)
+                            if isinstance(val.trigger,list):
+                                if len(val.trigger) == len(val.ionames):
+                                    trig = val.trigger[i]
+                                else:
+                                    trig = val.trigger[0]
+                                    self.print_log(type='W',msg='%d triggers given for %d ionames. Using the first trigger for all ionames.' % (len(val.trigger),len(val.ionames)))
+                            else:
+                                trig = val.trigger
+                            # Checking the polarity of the triggers (for now every trigger has to have same polarity)
+                            vthstr = ',%s' % str(val.vth)
+                            afterstr = ',%g' % float(val.after)
+                            beforestr = ',end'
                             if val.edgetype.lower()=='falling':
                                 polarity = 'xdown'
                             elif val.edgetype.lower()=='both':
+                                # Syntax for tcross is a bit different
                                 polarity = 'tcross'
+                                vthstr = ',vth=%s' % str(val.vth)
+                                afterstr = ',after=%g' % float(val.after)
+                                beforestr = ',before=end'
                             else:
                                 polarity = 'xup'
-                            self._plotcmd += ".extract file=\"%s\" vect label=%s yval(v(%s<*>),%s(v(%s),%s))\n" % (val.file[i],val.ionames[i],val.ionames[i].upper(),polarity,val.trigger,val.vth)
+                            self._plotcmd += ".extract file=\"%s\" vect label=%s yval(v(%s<*>),%s(v(%s)%s%s%s))\n" % (val.file[i],val.ionames[i],val.ionames[i].upper(),polarity,trig,vthstr,afterstr,beforestr)
                     elif val.iotype=='time':
                         for i in range(len(val.ionames)):
                             vthstr = ',%s' % str(val.vth)
@@ -237,6 +254,8 @@ class testbench(eldo_module):
                 module_file.write(self.contents)
 
     def export_subckt(self,**kwargs):
+        if self._postlayout:
+            return
         if not os.path.isfile(self.parent.eldosubcktsrc):
             self.print_log(type='I',msg='Exporting eldo subcircuit to %s.' %(self.parent.eldosubcktsrc))
             with open(self.parent.eldosubcktsrc, "w") as module_file:

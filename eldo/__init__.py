@@ -76,6 +76,17 @@ class eldo(thesdk,metaclass=abc.ABCMeta):
         self._preserve_eldofiles=value
 
     @property
+    def load_state(self):  
+        if hasattr(self,'_load_state'):
+            return self._load_state
+        else:
+            self._load_state=''
+        return self._load_state
+    @load_state.setter
+    def load_state(self,value):
+        self._load_state=value
+
+    @property
     def runname(self):
         if hasattr(self,'_runname'):
             return self._runname
@@ -385,7 +396,7 @@ class eldo(thesdk,metaclass=abc.ABCMeta):
                     self.print_log(type='W',msg='Could not remove %s.' % simpathname)
         else:
             # Using the private variable here to prevent the re-creation of the dir?
-            self.print_log(type='I',msg='Preserving %s.' % self._eldosimpath)
+            self.print_log(type='I',msg='Preserving eldo files in %s.' % self._eldosrcpath)
 
 
     @property
@@ -491,26 +502,52 @@ class eldo(thesdk,metaclass=abc.ABCMeta):
             self.print_log(type='W',msg='Something went wrong while extracting power consumptions.')
 
     def run_eldo(self):
-        self.tb = etb(self)
-        self.tb.iofiles = self.iofile_bundle
-        self.tb.dcsources = self.dcsource_bundle
-        self.tb.simcmds = self.simcmd_bundle
-        self.connect_inputs()
-        #self.tb.define_testbench()
-        self.tb.generate_contents()
-        self.tb.export_subckt(force=True)
-        self.tb.export(force=True)
-        self.write_infile()
-        #time.sleep(1)
-        self.execute_eldo_sim()
-        #time.sleep(1)
-        self.extract_powers()
-        self.read_outfile()
-        self.connect_outputs()
+        if self.load_state == '': 
+            # Normal execution of full simulation
+            self.tb = etb(self)
+            self.tb.iofiles = self.iofile_bundle
+            self.tb.dcsources = self.dcsource_bundle
+            self.tb.simcmds = self.simcmd_bundle
+            self.connect_inputs()
+            self.tb.generate_contents()
+            self.tb.export_subckt(force=True)
+            self.tb.export(force=True)
+            self.write_infile()
+            self.execute_eldo_sim()
+            self.extract_powers()
+            self.read_outfile()
+            self.connect_outputs()
 
-        # Calling deleter of iofiles
-        del self.iofile_bundle
-        # And eldo files (tb, subcircuit, wdb)
-        del self.eldosimpath
-
+            # Calling deleter of iofiles
+            del self.iofile_bundle
+            # And eldo files (tb, subcircuit, wdb)
+            del self.eldosimpath
+        else:
+            #Loading previous simulation results and not simulating again
+            try:
+                self.runname = self.load_state
+                simpath = self.entitypath+'/Simulations/eldosim/'+self.runname
+                if not (os.path.exists(simpath)):
+                    self.print_log(type='E',msg='Existing results not found in %s.' % simpath)
+                    existing = os.listdir(self.entitypath+'/Simulations/eldosim/')
+                    self.print_log(type='I',msg='Found results:')
+                    for f in existing:
+                        self.print_log(type='I',msg='%s' % f)
+                else:
+                    self.print_log(type='I',msg='Loading results from %s.' % simpath)
+                    #self.tb = etb(self)
+                    #self.tb.iofiles = self.iofile_bundle
+                    #self.tb.dcsources = self.dcsource_bundle
+                    #self.tb.simcmds = self.simcmd_bundle
+                    self.connect_inputs()
+                    #self.tb.generate_contents()
+                    #self.tb.export_subckt(force=True)
+                    #self.tb.export(force=True)
+                    #self.write_infile()
+                    #self.execute_eldo_sim()
+                    #self.extract_powers()
+                    self.read_outfile()
+                    self.connect_outputs()
+            except:
+                self.print_log(type='F',msg='Failed while loading results from %s.' % self._eldosimpath)
 
