@@ -120,7 +120,7 @@ class eldo_module(thesdk):
                             # Inside the subcircuit clause -> copy all lines except comments
                             if startfound:
                                 words = line.split()
-                                if words[0] != '*':
+                                if len(words) > 0 and words[0] != '*':
                                     self._subckt=self._subckt+line
                                     linecount += 1
                             # Calibre places an include statement above the first subcircuit -> grab that

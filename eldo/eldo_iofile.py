@@ -8,7 +8,7 @@ for TheSDK eldo
 
 Initially written by Okko Järvinen, okko.jarvinen@aalto.fi, 9.1.2020
 
-Last modification by Okko Järvinen, 04.02.2020 14:52
+Last modification by Okko Järvinen, 23.03.2020 12:20
 
 """
 import os
@@ -383,10 +383,14 @@ class eldo_iofile(iofile):
                         if self.Data is None: 
                             self.Data = np.array(arr).reshape(-1,1)
                         else:
+                            # TODO: This check was made temporarily, something like this should be here anyway though
+                            if len(arr) > len(self.Data[:,0]):
+                                arr = arr[1:]
                             self.Data = np.hstack((self.Data,np.array(arr).reshape(-1,1)))
                     infile.close()
                 else:
                     self.print_log(type='F',msg='Couldn\'t read file for input type \'%s\'.'%self.iotype)
-            except:
+            except Exception as e:
+                self.print_log(type='E',msg='\n%s' % e)
                 self.print_log(type='F',msg='Failed while reading files for %s.' % self.name)
 

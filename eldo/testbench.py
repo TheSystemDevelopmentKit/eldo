@@ -129,7 +129,7 @@ class testbench(eldo_module):
                                 busname = val.ionames[i]
                             # Adding the source
                             self._inputsignals += ".sigbus %s vhi=%s vlo=%s tfall=%s trise=%s thold=%s tdelay=%s base=%s PATTERN %s\n" % \
-                                    (busname,str(val.vhi),str(val.vlo),str(val.tfall),str(val.trise),str(1/val.rs),'0','bin',pattstr)
+                                    (busname,str(val.vhi),str(val.vlo),str(val.tfall),str(val.trise),str(1/val.rs),val.after,'bin',pattstr)
                     else:
                         print_log(type='F',msg='Input type \'%s\' undefined.' % val.iotype)
 
