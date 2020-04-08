@@ -7,7 +7,7 @@ Class for ELDO DC sources.
 
 Initially written for eldo-module by Okko Järvinen, okko.jarvinen@aalto.fi, 9.1.2020
 
-Last modification by Marko Kosunen, marko.kosunen@aalto.fi, 22.01.2020 12:28
+Last modification by Okko Järvinen, 08.04.2020 09:47
 
 """
 
@@ -65,6 +65,10 @@ class eldo_dcsource(thesdk):
                         Name of the positive node in the ELDO netlist.
                     neg : str
                         Name of the negative node in the ELDO netlist.
+                    noise : bool
+                        Enable the noise contribution of this source (only when transient
+                        noise is enabled).
+                        Default is True.
 
         '''
 
@@ -78,6 +82,7 @@ class eldo_dcsource(thesdk):
             self._extract=kwargs.get('extract',False)
             self._ext_start=kwargs.get('ext_start','start')
             self._ext_stop=kwargs.get('ext_stop','end')
+            self._noise=kwargs.get('noise',True)
             # TODO: Implement for example supply ramping
 
         except:
@@ -139,7 +144,7 @@ class eldo_dcsource(thesdk):
         return self._value
     @value.setter
     def value(self,value):
-        self._value=value
+        self._value=str(value)
 
     @property
     def extract(self):
@@ -174,3 +179,13 @@ class eldo_dcsource(thesdk):
     def ext_stop(self,value):
         self._ext_stop=str(value)
 
+    @property
+    def noise(self):
+        if hasattr(self,'_noise'):
+            return self._noise
+        else:
+            self._noise=False
+        return self._noise
+    @noise.setter
+    def noise(self,value):
+        self._noise=value
