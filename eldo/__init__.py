@@ -10,6 +10,7 @@ automatically generate testbenches for the most common simulation cases.
 Initially written by Okko Järvinen, 2019
 """
 import os
+import glob
 import sys
 import subprocess
 import shlex
@@ -526,7 +527,13 @@ class eldo(thesdk,metaclass=abc.ABCMeta):
             #Loading previous simulation results and not simulating again
             try:
                 self.runname = self.load_state
-                simpath = self.entitypath+'/Simulations/eldosim/'+self.runname
+                if self.runname == 'latest' or self.runname == 'last':
+                    results = glob.glob(self.entitypath+'/Simulations/eldosim/*')
+                    latest = max(results, key=os.path.getctime)
+                    self.runname = latest.split('/')[-1]
+                    simpath = latest
+                else:
+                    simpath = self.entitypath+'/Simulations/eldosim/'+self.runname
                 if not (os.path.exists(simpath)):
                     self.print_log(type='E',msg='Existing results not found in %s.' % simpath)
                     existing = os.listdir(self.entitypath+'/Simulations/eldosim/')

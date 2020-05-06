@@ -8,7 +8,7 @@ for TheSDK eldo
 
 Initially written by Okko Järvinen, okko.jarvinen@aalto.fi, 9.1.2020
 
-Last modification by Okko Järvinen, 23.03.2020 12:20
+Last modification by Okko Järvinen, 21.04.2020 14:19
 
 """
 import os
@@ -44,7 +44,8 @@ class eldo_iofile(iofile):
                 Name of the IO.
             ioformat : str
                 Formatting of the IO signal.
-                Not yet implemented.
+                Currently works for sample type inputs only.
+                Options: 'dec'/'bin'/'hexa'.
             dir : str
                 Direction of the IO: 'in'/'out'.
             iotype : str
@@ -100,8 +101,7 @@ class eldo_iofile(iofile):
             super(eldo_iofile,self).__init__(parent=parent,**kwargs)
             self.paramname=kwargs.get('param','-g g_file_')
 
-            self._ioformat=kwargs.get('ioformat','%d') #by default, the io values are decimal integer numbers
-
+            self._ioformat=kwargs.get('ioformat','bin') 
             self._trigger=kwargs.get('trigger','')
             self._vth=kwargs.get('vth',0.5)
             self._edgetype=kwargs.get('edgetype','rising')
@@ -121,7 +121,7 @@ class eldo_iofile(iofile):
         if hasattr(self,'_ioformat'):
             return self._ioformat
         else:
-            self._ioformat='%d'
+            self._ioformat='bin'
         return self._ioformat
     @ioformat.setter
     def ioformat(self,value):
@@ -256,7 +256,7 @@ class eldo_iofile(iofile):
         for ioname in self.ionames:
             #self._file.append(self.parent.eldosimpath +'/' + ioname.replace('<','').replace('>','').replace('.','_')\
             #        + '_' + self.rndpart +'.txt')
-            filename = '%s/%s_%s_%s.txt' % (self.parent.eldosimpath,self.parent.runname,ioname.replace('<','').replace('>','').replace('.','_'),self.iotype)
+            filename = '%s/%s_%s_%s%s.txt' % (self.parent.eldosimpath,self.parent.runname,ioname.replace('<','').replace('>','').replace('.','_'),self.iotype,('_%s' % self.edgetype) if self.iotype == 'time' else '')
             #filenum = 0
             #while os.path.exists(filename):
             #    filename = '%s/%s_%s_%s_%d.txt' % (self.parent.eldosimpath,self.parent.runname,ioname.replace('<','').replace('>','').replace('.','_'),self.iotype,filenum)
