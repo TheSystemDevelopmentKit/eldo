@@ -157,6 +157,18 @@ class testbench(eldo_module):
                     if val.noise:
                         self._simcmdstr += '.noisetran fmin=%s fmax=%s nbrun=1 NONOM %s\n' % \
                                 (str(val.fmin),str(val.fmax),'seed=%d'%(val.seed) if val.seed is not None else '')
+                elif str(simtype).lower() == 'dc':
+                    # Not very complete...
+                    self._simcmdstr += '.%s\n' % str(simtype).lower()
+                elif str(simtype).lower() == 'op':
+                    if val.dctime is None:
+                        timestr = ''
+                    else:
+                        if val.dctime.lower() == 'end':
+                            timestr = 'end'
+                        else:
+                            timestr = 'time=%s' % str(val.dctime)
+                    self._simcmdstr += '.%s %s\n' % (str(simtype).lower(),timestr)
                 else:
                     self.print_log(type='E',msg='Simulation type \'%s\' not yet implemented.' % str(simtype))
         return self._simcmdstr
@@ -171,6 +183,7 @@ class testbench(eldo_module):
     @property
     def plotcmd(self):
         if not hasattr(self,'_plotcmd'):
+            self._plotcmd = ''
             # TODO: This manual plot should be moved elsewhere
             if len(self.parent.eldoplotextras) > 0:
                 self._plotcmd = "*** Manually probed signals\n"

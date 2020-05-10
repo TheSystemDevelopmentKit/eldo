@@ -7,7 +7,7 @@ Class for eldo simulation commands.
 
 Initially written for eldo-module by Okko Järvinen, okko.jarvinen@aalto.fi, 9.1.2020
 
-Last modification by Okko Järvinen, 14.01.2020 13:21
+Last modification by Okko Järvinen, 08.05.2020 10:44
 
 """
 
@@ -42,7 +42,7 @@ class eldo_simcmd(thesdk):
     
     **kwargs :  
             sim : str  
-                Simulation type. Currently only 'tran' supported.
+                Simulation type: 'tran','op','dc' supported. Default 'tran'.
             tprint : float/str  
                 Print interval. Default '1f' or 1e-15.
             tstop : float/str  
@@ -58,6 +58,10 @@ class eldo_simcmd(thesdk):
                 Maximum noise frequency. Default 5e9.
             seed : int
                 Random generator seed for noise transient. Default None (random).
+            dctime : float/str
+                Time at which to print the operating point / run DC simulation.
+                Can be a floating point number (time) or word 'END' to run after transient.
+                Default None.
     """
 
     @property
@@ -75,6 +79,7 @@ class eldo_simcmd(thesdk):
             self._fmin=kwargs.get('fmin',1)
             self._fmax=kwargs.get('fmax',5e9)
             self._seed=kwargs.get('seed',None)
+            self._dctime=kwargs.get('dctime',None)
 
         except:
             self.print_log(type='F', msg="Eldo simulation command definition failed.")
@@ -171,3 +176,13 @@ class eldo_simcmd(thesdk):
     def seed(self,value):
         self._seed=value
 
+    @property
+    def dctime(self):
+        if hasattr(self,'_dctime'):
+            return self._dctime
+        else:
+            self._dctime=None
+        return self._dctime
+    @dctime.setter
+    def dctime(self,value):
+        self._dctime=value

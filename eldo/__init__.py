@@ -479,8 +479,8 @@ class eldo(thesdk,metaclass=abc.ABCMeta):
         self.powers = {}
         self.currents = {}
         try:
-            currentmatch = re.compile(r"CURRENT_")
-            powermatch = re.compile(r"POWER_")
+            currentmatch = re.compile(r"\* CURRENT_")
+            powermatch = re.compile(r"\* POWER_")
             with open(self.eldochisrc) as infile:
                 chifile = infile.readlines()
                 for line in chifile:
@@ -489,16 +489,19 @@ class eldo(thesdk,metaclass=abc.ABCMeta):
                         sourcename = words[1].replace('CURRENT_','')
                         extval = float(words[3])
                         self.currents[sourcename] = extval
-                        self.print_log(type='I',msg='%s\tcurrent = %g\tA'%(sourcename,extval))
                     elif powermatch.search(line):
                         words = line.split()
                         sourcename = words[1].replace('POWER_','')
                         extval = float(words[3])
                         self.powers[sourcename] = extval
-                        self.print_log(type='I',msg='%s\tpower   = %g\tW'%(sourcename,extval))
-            if len(self.currents.keys()) > 0:
-                self.print_log(type='I',msg='Total\tcurrent = %g\tA'%(sum(self.currents.values())))
-                self.print_log(type='I',msg='Total\tpower   = %g\tW'%(sum(self.powers.values())))
+            self.print_log(type='I',msg='Extracted power consumption from transient:')
+            maxlen = len(max([list(self.currents.keys()),'total'],key=len))
+            for name,val in self.currents.items():
+                self.print_log(type='I',msg='%s%s current = %.06f mA'%(name,' '*(maxlen-len(name)),1e3*val))
+            for name,val in self.powers.items():
+                self.print_log(type='I',msg='%s%s power   = %.06f mW'%(name,' '*(maxlen-len(name)),1e3*val))
+            self.print_log(type='I',msg='Total%s current = %.06f mA'%(' '*(maxlen-5),1e3*sum(self.currents.values())))
+            self.print_log(type='I',msg='Total%s power   = %.06f mW'%(' '*(maxlen-5),1e3*sum(self.powers.values())))
         except:
             self.print_log(type='W',msg='Something went wrong while extracting power consumptions.')
 
@@ -552,7 +555,7 @@ class eldo(thesdk,metaclass=abc.ABCMeta):
                     #self.tb.export(force=True)
                     #self.write_infile()
                     #self.execute_eldo_sim()
-                    #self.extract_powers()
+                    self.extract_powers()
                     self.read_outfile()
                     self.connect_outputs()
             except:

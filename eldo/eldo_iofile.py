@@ -8,7 +8,7 @@ for TheSDK eldo
 
 Initially written by Okko Järvinen, okko.jarvinen@aalto.fi, 9.1.2020
 
-Last modification by Okko Järvinen, 21.04.2020 14:19
+Last modification by Okko Järvinen, 07.05.2020 14:57
 
 """
 import os
@@ -112,6 +112,7 @@ class eldo_iofile(iofile):
             self._vlo=kwargs.get('vlo',0)
             self._tfall=kwargs.get('tfall',5e-12)
             self._trise=kwargs.get('trise',5e-12)
+            self._sourcetype=kwargs.get('sourcetype','V')
 
         except:
             self.print_log(type='F', msg="eldo IO file definition failed.")
