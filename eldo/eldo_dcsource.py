@@ -7,7 +7,7 @@ Class for ELDO DC sources.
 
 Initially written for eldo-module by Okko Järvinen, okko.jarvinen@aalto.fi, 9.1.2020
 
-Last modification by Okko Järvinen, 08.04.2020 09:47
+Last modification by Okko Järvinen, 10.05.2020 12:46
 
 """
 
@@ -69,7 +69,9 @@ class eldo_dcsource(thesdk):
                         Enable the noise contribution of this source (only when transient
                         noise is enabled).
                         Default is True.
-
+                    ramp : float
+                        Ramp up the source from 0 to value in ramp seconds.
+                        Default is 0 (no ramping).
         '''
 
         try:  
@@ -83,7 +85,7 @@ class eldo_dcsource(thesdk):
             self._ext_start=kwargs.get('ext_start','start')
             self._ext_stop=kwargs.get('ext_stop','end')
             self._noise=kwargs.get('noise',True)
-            # TODO: Implement for example supply ramping
+            self._ramp=kwargs.get('ramp',0)
 
         except:
             self.print_log(type='F', msg="Eldo DC source definition failed.")
@@ -189,3 +191,15 @@ class eldo_dcsource(thesdk):
     @noise.setter
     def noise(self,value):
         self._noise=value
+
+    @property
+    def ramp(self):
+        if hasattr(self,'_ramp'):
+            return self._ramp
+        else:
+            self._ramp=0
+        return self._ramp
+    @ramp.setter
+    def ramp(self,value):
+        self._ramp=value
+

@@ -78,9 +78,15 @@ class testbench(eldo_module):
         if not hasattr(self,'_dcsourcestr'):
             self._dcsourcestr = "*** DC sources\n"
             for name, val in self.dcsources.Members.items():
-                self._dcsourcestr += "%s%s %s %s %g %s\n" % \
-                        (val.sourcetype.upper(),val.name.lower(),val.pos,val.neg,val.value, \
-                        'NONOISE' if not val.noise else '')
+                if val.ramp == 0:
+                    self._dcsourcestr += "%s%s %s %s %g %s\n" % \
+                            (val.sourcetype.upper(),val.name.lower(),val.pos,val.neg,val.value, \
+                            'NONOISE' if not val.noise else '')
+                else:
+                    self._dcsourcestr += "%s%s %s %s %s %s\n" % \
+                            (val.sourcetype.upper(),val.name.lower(),val.pos,val.neg, \
+                            'pulse(0 %g 0 %g)' % (val.value,abs(val.ramp)), \
+                            'NONOISE' if not val.noise else '')
                 # If the DC source is a supply, the power consumption is extracted for it automatically
                 if val.extract:
                     supply = "%s%s"%(val.sourcetype.upper(),val.name.lower())
