@@ -8,7 +8,7 @@ for TheSDK eldo
 
 Initially written by Okko Järvinen, okko.jarvinen@aalto.fi, 9.1.2020
 
-Last modification by Okko Järvinen, 07.05.2020 14:57
+Last modification by Okko Järvinen, 12.05.2020 15:03
 
 """
 import os
@@ -392,6 +392,6 @@ class eldo_iofile(iofile):
                 else:
                     self.print_log(type='F',msg='Couldn\'t read file for input type \'%s\'.'%self.iotype)
             except Exception as e:
-                self.print_log(type='E',msg='\n%s' % e)
-                self.print_log(type='F',msg='Failed while reading files for %s.' % self.name)
+                self.print_log(type='W',msg='\n%s' % e)
+                self.print_log(type='W',msg='Failed while reading files for %s.' % self.name)
 
