@@ -123,6 +123,9 @@ class testbench(eldo_module):
                                     (val.sourcetype.upper(),val.ionames[i].lower(),val.ionames[i].upper(),val.file[i])
                     elif val.iotype.lower()=='sample':
                         for i in range(len(val.ionames)):
+                            # Input was scalar (integer or string, not a list) -> converting to array
+                            if not hasattr(val.Data, "__len__") or isinstance(val.Data,str):
+                                val.Data = np.array([val.Data]).reshape(-1,1)
                             pattstr = ''
                             for d in val.Data[:,i]:
                                 pattstr += '%s ' % str(d)
